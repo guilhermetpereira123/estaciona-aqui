@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EstacionaAqui - Reserva de Vagas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .view-section, #user-dashboard, #owner-dashboard, #user-register-form, #owner-register-form, #welcome-owner {
+            display: none;
+        }
+        #user-view, #welcome-section, #welcome-client { display: block; }
+        .message {
+            display: none; margin-bottom: 1rem; padding: 1rem;
+            border-radius: 0.375rem; text-align: center; font-weight: 500;
+        }
+        .message.success { display: block; background-color: #d1fae5; color: #065f46; }
+        .message.error { display: block; background-color: #fee2e2; color: #b91c1c; }
+        .plan-item { display: flex; justify-content: space-between; align-items: center; }
+        .modal-hidden { display: none; }
+        .modal-visible {
+            display: flex; position: fixed; z-index: 50;
+            left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0, 0, 0, 0.6);
+            align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background-color: #fefefe; margin: auto; padding: 24px;
+            border-radius: 8px; width: 90%; max-width: 500px;
+        }
+        /* Footer de Logout */
+        #logout-footer {
+            display: none; /* Escondido por padrão */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            background-color: #FFFFFF;
+            border-top: 1px solid #E5E7EB;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            z-index: 40;
+        }
+        body {
+            padding-bottom: 80px;
+        }
+    </style>
+</head>
+<body class="bg-blue-50">
+
+    <div class="container mx-auto p-4 sm:p-8 max-w-7xl">
+       
+        <header class="bg-blue-600 p-6 rounded-lg shadow-lg text-center mb-6">
+            <h1 class="text-3xl font-bold text-white">EstacionaAqui</h1>
+            <p id="welcome-message" class="text-blue-100">Sua vaga de estacionamento a um clique de distância.</p>
+        </header>
+
+        <div id="message-area" class="message" role="alert"></div>
+
+        <div id="profile-selection-tabs" class="flex justify-center bg-white rounded-lg shadow-md mb-6 overflow-hidden">
+            <button id="btn-user-view" class="w-1/2 p-4 font-semibold text-white bg-blue-600">
+                Sou Cliente
+            </button>
+            <button id="btn-owner-view" class="w-1/2 p-4 font-semibold text-blue-700 bg-blue-100">
+                Sou Dono
+            </button>
+        </div>
+       
+        <section id="welcome-section" class="bg-white p-6 rounded-lg shadow-md space-y-4 mb-6">
+            <h2 class="text-2xl font-semibold text-blue-800">Bem-vindo ao EstacionaAqui!</h2>
+            <div id="welcome-client">
+                <p class="text-gray-700">Encontre e reserve sua vaga de estacionamento de forma fácil e rápida. Filtre por bairro, veja os serviços disponíveis (como lavagem ou vaga coberta) e escolha o plano de preço que melhor se adapta a você, tudo em tempo real.</p>
+            </div>
+            <div id="welcome-owner">
+                <p class="text-gray-700">Gerencie seus negócios de forma eficiente. Cadastre seus estacionamentos, defina horários de funcionamento, crie planos de preço personalizados (por hora, diária, etc.) e receba notificações instantâneas para cada nova reserva.</p>
+            </div>
+        </section>
+
+        <section id="user-view" class="view-section space-y-6">
+            <div id="user-login-form" class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-semibold mb-4 text-blue-800">Login de Cliente</h2>
+                <form id="form-user-login" class="space-y-4">
+                    <input type="hidden" name="action" value="login_user">
+                    <input type="email" name="email" placeholder="Email" required class="w-full p-2 border rounded-md">
+                    <input type="password" name="senha" placeholder="Senha" required class="w-full p-2 border rounded-md">
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-blue-700">Entrar</button>
+                    <p class="text-center text-sm">Não tem conta? <a href="#" id="show-user-register" class="font-medium text-blue-600 hover:text-blue-500">Cadastre-se</a></p>
+                </form>
+            </div>
+            <div id="user-register-form" class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-semibold mb-4 text-blue-800">Cadastro de Cliente</h2>
+                <form id="form-user-register" class="space-y-4">
+                    <input type="hidden" name="action" value="register_user">
+                    <input type="text" name="nome" placeholder="Nome Completo" required class="w-full p-2 border rounded-md">
+                    <input type="text" name="cpf" placeholder="CPF" required class="w-full p-2 border rounded-md">
+                    <input type="email" name="email" placeholder="Email" required class="w-full p-2 border rounded-md">
+                    <input type="password" name="senha" placeholder="Senha" required class="w-full p-2 border rounded-md">
+                    <input type="text" name="carro" placeholder="Modelo do Carro (ex: Honda Civic)" required class="w-full p-2 border rounded-md">
+                    <input type="text" name="placa" placeholder="Placa do Carro (ex: ABC-1234)" required class="w-full p-2 border rounded-md">
+                    <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-green-700">Cadastrar</button>
+                    <p class="text-center text-sm">Já tem conta? <a href="#" id="show-user-login" class="font-medium text-blue-600 hover:text-blue-500">Faça Login</a></p>
+                </form>
+            </div>
+        </section>
+
+        <section id="owner-view" class="view-section space-y-6">
+            <div id="owner-login-form" class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-semibold mb-4 text-blue-800">Login de Dono</h2>
+                <form id="form-owner-login" class="space-y-4">
+                    <input type="hidden" name="action" value="login_owner">
+                    <input type="email" name="email" placeholder="Email" required class="w-full p-2 border rounded-md">
+                    <input type="password" name="senha" placeholder="Senha" required class="w-full p-2 border rounded-md">
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-blue-700">Entrar</button>
+                    <p class="text-center text-sm">Não tem conta? <a href="#" id="show-owner-register" class="font-medium text-blue-600 hover:text-blue-500">Cadastre-se</a></p>
+                </form>
+            </div>
+            <div id="owner-register-form" class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-semibold mb-4 text-blue-800">Cadastro de Dono</h2>
+                <form id="form-owner-register" class="space-y-4">
+                    <input type="hidden" name="action" value="register_owner">
+                    <input type="text" name="nome" placeholder="Nome Completo" required class="w-full p-2 border rounded-md">
+                    <input type="email" name="email" placeholder="Email" required class="w-full p-2 border rounded-md">
+                    <input type="password" name="senha" placeholder="Senha" required class="w-full p-2 border rounded-md">
+                    <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-green-700">Cadastrar</button>
+                    <p class="text-center text-sm">Já tem conta? <a href="#" id="show-owner-login" class="font-medium text-blue-600 hover:text-blue-500">Faça Login</a></p>
+                </form>
+            </div>
+        </section>
+
+        <section id="user-dashboard" class="space-y-6">
+            <div class="flex justify-center bg-white rounded-lg shadow-md overflow-hidden">
+                <button id="btn-show-parking-list" class="w-1/2 p-4 font-semibold text-white bg-blue-600">Buscar Vagas</button>
+                <button id="btn-show-my-reservations" class="w-1/2 p-4 font-semibold text-blue-700 bg-blue-100">Minhas Reservas</button>
+            </div>
+           
+            <div id="div-my-reservations" class="bg-white p-6 rounded-lg shadow-md" style="display: none;">
+                <h2 class="text-2xl font-semibold mb-4 text-blue-800">Minhas Reservas Ativas</h2>
+                <button id="refresh-my-reservations" class="w-full mb-4 bg-blue-100 text-blue-800 py-2 px-4 rounded-md hover:bg-blue-200">Atualizar Minhas Reservas</button>
+                <p class="text-xs text-gray-500 mb-4 italic text-center">
+                    Atenção: O tempo do seu plano começa a contar a partir do <strong>Horário Agendado</strong>, independente do horário do check-in. Caso ultrapasse o período do plano, o dono do estacionamento poderá cobrar valores excedentes.
+                </p>
+                <div id="my-reservations-list" class="space-y-2"></div>
+            </div>
+           
+            <div id="div-parking-list" class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-semibold mb-4 text-blue-800">Estacionamentos Disponíveis</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="filter-bairro" class="block text-sm font-medium text-gray-700">Filtrar por Bairro:</label>
+                        <select id="filter-bairro" class="w-full p-2 border rounded-md bg-white">
+                            <option value="">-- Todos os Bairros --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Filtrar por Serviços:</label>
+                        <div class="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                            <div><input type="checkbox" id="cb-lavagem" class="service-filter-cb" value="Lavagem"> <label for="cb-lavagem">Lavagem</label></div>
+                            <div><input type="checkbox" id="cb-manobrista" class="service-filter-cb" value="Manobrista"> <label for="cb-manobrista">Manobrista</label></div>
+                            <div><input type="checkbox" id="cb-vaga_coberta" class="service-filter-cb" value="Vaga Coberta"> <label for="cb-vaga_coberta">Vaga Coberta</label></div>
+                            <div><input type="checkbox" id="cb-limpeza" class="service-filter-cb" value="Limpeza Interna do Veículo"> <label for="cb-limpeza">Limpeza Interna</label></div>
+                        </div>
+                    </div>
+                </div>
+                <button id="btn-apply-filters" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md font-semibold hover:bg-blue-600 mb-4">
+                    Aplicar Filtros
+                </button>
+                <div id="parking-list" class="space-y-4"></div>
+            </div>
+        </section>
+       
+        <section id="owner-dashboard" class="space-y-6">
+            <div class="flex justify-center bg-white rounded-lg shadow-md overflow-hidden">
+                <button id="btn-owner-register-parking" class="w-1/3 p-4 font-semibold text-white bg-blue-600">Cadastrar</button>
+                <button id="btn-owner-manage-plans" class="w-1/3 p-4 font-semibold text-blue-700 bg-blue-100">Gerenciar Planos</button>
+                <button id="btn-owner-notifications" class="w-1/3 p-4 font-semibold text-blue-700 bg-blue-100">Notificações</button>
+            </div>
+            <div id="div-owner-register-parking" class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-semibold mb-4 text-blue-800">Cadastrar Novo Estacionamento</h2>
+                <form id="form-parking-register" class="space-y-4" enctype="multipart/form-data">
+                    <input type="hidden" name="action" value="register_parking">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <input type="text" name="endereco" placeholder="Endereço Completo (Rua, Nro)" required class="w-full p-2 border rounded-md">
+                        <input type="text" name="bairro" placeholder="Bairro" required class="w-full p-2 border rounded-md">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <input type="number" name="total_vagas" placeholder="Nº Total de Vagas" required class="w-full p-2 border rounded-md">
+                        <div class="col-span-1">
+                            <label for="hora_abertura" class="block text-sm font-medium text-gray-700">Abre às:</label>
+                            <input type="time" name="hora_abertura" id="hora_abertura" required class="w-full p-2 border rounded-md">
+                        </div>
+                        <div class="col-span-1">
+                            <label for="hora_fechamento" class="block text-sm font-medium text-gray-700">Fecha às:</label>
+                            <input type="time" name="hora_fechamento" id="hora_fechamento" required class="w-full p-2 border rounded-md">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Outros Serviços (opcional):</label>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <div><input type="checkbox" name="servicos[]" id="cb-serv-lavagem" value="Lavagem"> <label for="cb-serv-lavagem">Lavagem</label></div>
+                            <div><input type="checkbox" name="servicos[]" id="cb-serv-manobrista" value="Manobrista"> <label for="cb-serv-manobrista">Manobrista</label></div>
+                            <div><input type="checkbox" name="servicos[]" id="cb-serv-coberta" value="Vaga Coberta"> <label for="cb-serv-coberta">Vaga Coberta</label></div>
+                            <div><input type="checkbox" name="servicos[]" id="cb-serv-limpeza" value="Limpeza Interna do Veículo"> <label for="cb-serv-limpeza">Limpeza Interna</label></div>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="foto_local" class="block text-sm font-medium text-gray-700">Foto do Local</label>
+                        <input type="file" name="foto_local" id="foto_local" accept="image/png, image/jpeg" class="w-full text-sm text-gray-500
+                            file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold
+                            file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-blue-700">Cadastrar Estacionamento</button>
+                </form>
+            </div>
+            <div id="div-owner-manage-plans" class="bg-white p-6 rounded-lg shadow-md space-y-4" style="display: none;">
+                <h2 class="text-2xl font-semibold mb-4 text-blue-800">Gerenciar Planos de Preço</h2>
+                <div>
+                    <label for="select-my-estacionamento" class="block text-sm font-medium text-gray-700">Selecione um Estacionamento</label>
+                    <select id="select-my-estacionamento" class="w-full p-2 border rounded-md bg-white">
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
+                <div id="plans-list-manager" class="space-y-2"></div>
+                <form id="form-add-plan" class="space-y-4 sm:flex sm:space-y-0 sm:space-x-4 items-end" style="display: none;">
+                    <div class="flex-1">
+                        <label for="plan-periodo" class="block text-sm font-medium text-gray-700">Período (em horas)</label>
+                        <input type="number" id="plan-periodo" name="periodo_horas" placeholder="Ex: 1, 2, 24" min="1" required class="w-full p-2 border rounded-md">
+                    </div>
+                    <div class="flex-1">
+                        <label for="plan-valor" class="block text-sm font-medium text-gray-700">Valor (R$)</label>
+                        <input type="number" step="0.01" id="plan-valor" name="valor" placeholder="Ex: 15.50" min="0.01" required class="w-full p-2 border rounded-md">
+                    </div>
+                    <button type="submit" class="w-full sm:w-auto bg-green-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-green-700">Adicionar</button>
+                </form>
+            </div>
+            <div id="div-owner-notifications" class="bg-white p-6 rounded-lg shadow-md" style="display: none;">
+                <h2 class="text-2xl font-semibold mb-4 text-blue-800">Minhas Notificações</h2>
+                <button id="refresh-notifications" class="w-full mb-4 bg-blue-100 text-blue-800 py-2 px-4 rounded-md hover:bg-blue-200">Atualizar Notificações</button>
+                <div class="flex border-b border-gray-200 mb-4">
+                    <button id="btn-notif-reservas" class="flex-1 py-2 px-4 text-center font-semibold text-white bg-blue-600 rounded-t-md">
+                        Novas Reservas
+                    </button>
+                    <button id="btn-notif-cancelamentos" class="flex-1 py-2 px-4 text-center font-semibold text-blue-700 bg-blue-100 rounded-t-md">
+                        Cancelamentos
+                    </button>
+                </div>
+                <div id="div-notif-reservas" class="space-y-2">
+                    <div id="reservation-notification-list" class="space-y-2"></div>
+                </div>
+                <div id="div-notif-cancelamentos" class="space-y-2" style="display: none;">
+                    <div id="cancel-notification-list" class="space-y-2"></div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <footer id="logout-footer" class="flex justify-center">
+        <button id="btn-logout" class="w-full max-w-lg bg-red-500 text-white py-2 px-4 rounded-md font-semibold hover:bg-red-600">
+            Sair (Logout)
+        </button>
+    </footer>
+
+    <div id="plans-modal" class="modal-hidden">
+        <div class="modal-content space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 id="plans-modal-title" class="text-2xl font-semibold text-gray-800">Planos Disponíveis</h2>
+                <button id="plans-modal-close-btn" class="text-gray-500 hover:text-gray-800 font-bold text-2xl">&times;</button>
+            </div>
+           
+            <div class="mt-4">
+                <label for="plans-modal-time-input" class="block text-sm font-medium text-gray-700">Selecione o horário de início:</label>
+                <input type="datetime-local" id="plans-modal-time-input" class="w-full p-2 border rounded-md">
+            </div>
+           
+            <p id="plans-modal-status" class="text-center font-semibold"></p>
+            <div id="plans-modal-list" class="space-y-3"></div>
+        </div>
+    </div>
+
+
+    <script>
+        let currentUser = null;
+        let currentOwner = null;
+        let notificationInterval = null;
+        let currentModalData = {
+            plans: [],
+            abertura: null,
+            fechamento: null,
+            estacionamentoId: null
+        };
+        const API_URL = 'api_corrigido.php';
+
+        const el = {
+            messageArea: document.getElementById('message-area'),
+            profileTabs: document.getElementById('profile-selection-tabs'),
+            btnUserView: document.getElementById('btn-user-view'),
+            btnOwnerView: document.getElementById('btn-owner-view'),
+            userView: document.getElementById('user-view'),
+            userLoginForm: document.getElementById('user-login-form'),
+            userRegisterForm: document.getElementById('user-register-form'),
+            showUserRegister: document.getElementById('show-user-register'),
+            showUserLogin: document.getElementById('show-user-login'),
+            ownerView: document.getElementById('owner-view'),
+            ownerLoginForm: document.getElementById('owner-login-form'),
+            ownerRegisterForm: document.getElementById('owner-register-form'),
+            showOwnerRegister: document.getElementById('show-owner-register'),
+            showOwnerLogin: document.getElementById('show-owner-login'),
+            welcomeMessage: document.getElementById('welcome-message'),
+            welcomeSection: document.getElementById('welcome-section'),
+            welcomeClient: document.getElementById('welcome-client'),
+            welcomeOwner: document.getElementById('welcome-owner'),
+            userDashboard: document.getElementById('user-dashboard'),
+            btnShowParkingList: document.getElementById('btn-show-parking-list'),
+            btnShowMyReservations: document.getElementById('btn-show-my-reservations'),
+            divMyReservations: document.getElementById('div-my-reservations'),
+            divParkingList: document.getElementById('div-parking-list'),
+            parkingList: document.getElementById('parking-list'),
+            myReservationsList: document.getElementById('my-reservations-list'),
+            filterBairro: document.getElementById('filter-bairro'),
+            btnApplyFilters: document.getElementById('btn-apply-filters'),
+            ownerDashboard: document.getElementById('owner-dashboard'),
+            btnOwnerRegisterParking: document.getElementById('btn-owner-register-parking'),
+            btnOwnerManagePlans: document.getElementById('btn-owner-manage-plans'),
+            btnOwnerNotifications: document.getElementById('btn-owner-notifications'),
+            divOwnerRegisterParking: document.getElementById('div-owner-register-parking'),
+            divOwnerManagePlans: document.getElementById('div-owner-manage-plans'),
+            divOwnerNotifications: document.getElementById('div-owner-notifications'),
+            selectMyEstacionamento: document.getElementById('select-my-estacionamento'),
+            plansListManager: document.getElementById('plans-list-manager'),
+            formAddPlan: document.getElementById('form-add-plan'),
+            reservationNotificationList: document.getElementById('reservation-notification-list'),
+            cancelNotificationList: document.getElementById('cancel-notification-list'),
+            btnNotifReservas: document.getElementById('btn-notif-reservas'),
+            btnNotifCancelamentos: document.getElementById('btn-notif-cancelamentos'),
+            divNotifReservas: document.getElementById('div-notif-reservas'),
+            divNotifCancelamentos: document.getElementById('div-notif-cancelamentos'),
+            plansModal: document.getElementById('plans-modal'),
+            plansModalCloseBtn: document.getElementById('plans-modal-close-btn'),
+            plansModalTitle: document.getElementById('plans-modal-title'),
+            plansModalList: document.getElementById('plans-modal-list'),
+            plansModalStatus: document.getElementById('plans-modal-status'),
+            plansModalTimeInput: document.getElementById('plans-modal-time-input'),
+            logoutFooter: document.getElementById('logout-footer'),
+            btnLogout: document.getElementById('btn-logout')
+        };
+
+        // --- Inicialização ---
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLoginStatus();
+            setupEventListeners();
+        });
+
+        async function checkLoginStatus() {
+            const result = await apiCall('GET', { action: 'check_session' });
+            if (result.status === 'success') {
+                if (result.role === 'user') {
+                    currentUser = result.data;
+                    showDashboard('user');
+                } else if (result.role === 'owner') {
+                    currentOwner = result.data;
+                    showDashboard('owner');
+                }
+            } else { showView('user'); }
+        }
+
+        function setupEventListeners() {
+            el.btnUserView.addEventListener('click', () => {
+                showView('user');
+                el.welcomeClient.style.display = 'block';
+                el.welcomeOwner.style.display = 'none';
+            });
+            el.btnOwnerView.addEventListener('click', () => {
+                showView('owner');
+                el.welcomeClient.style.display = 'none';
+                el.welcomeOwner.style.display = 'block';
+            });
+            el.showUserRegister.addEventListener('click', (e) => { e.preventDefault(); el.userLoginForm.style.display = 'none'; el.userRegisterForm.style.display = 'block'; });
+            el.showUserLogin.addEventListener('click', (e) => { e.preventDefault(); el.userRegisterForm.style.display = 'none'; el.userLoginForm.style.display = 'block'; });
+            el.showOwnerRegister.addEventListener('click', (e) => { e.preventDefault(); el.ownerLoginForm.style.display = 'none'; el.ownerRegisterForm.style.display = 'block'; });
+            el.showOwnerLogin.addEventListener('click', (e) => { e.preventDefault(); el.ownerRegisterForm.style.display = 'none'; el.ownerLoginForm.style.display = 'block'; });
+            document.getElementById('form-user-login').addEventListener('submit', handleFormSubmit);
+            document.getElementById('form-user-register').addEventListener('submit', handleFormSubmit);
+            document.getElementById('form-owner-login').addEventListener('submit', handleFormSubmit);
+            document.getElementById('form-owner-register').addEventListener('submit', handleFormSubmit);
+            document.getElementById('form-parking-register').addEventListener('submit', handleFormSubmit);
+            el.formAddPlan.addEventListener('submit', handleAddPlan);
+            el.btnLogout.addEventListener('click', handleLogout);
+            document.getElementById('refresh-notifications').addEventListener('click', loadNotifications);
+            document.getElementById('refresh-my-reservations').addEventListener('click', loadMyReservations);
+            el.btnShowParkingList.addEventListener('click', () => showUserDashboardView('parking'));
+            el.btnShowMyReservations.addEventListener('click', () => showUserDashboardView('reservations'));
+            el.btnOwnerRegisterParking.addEventListener('click', () => showOwnerDashboardView('register'));
+            el.btnOwnerManagePlans.addEventListener('click', () => showOwnerDashboardView('plans'));
+            el.btnOwnerNotifications.addEventListener('click', () => showOwnerDashboardView('notifications'));
+            el.selectMyEstacionamento.addEventListener('change', (e) => {
+                const estacionamentoId = e.target.value;
+                if (estacionamentoId) {
+                    loadPlansForManagement(estacionamentoId);
+                    el.formAddPlan.style.display = 'flex';
+                } else {
+                    el.plansListManager.innerHTML = '';
+                    el.formAddPlan.style.display = 'none';
+                }
+            });
+            el.plansModalCloseBtn.addEventListener('click', () => {
+                el.plansModal.classList.add('modal-hidden');
+                el.plansModal.classList.remove('modal-visible');
+            });
+            el.btnApplyFilters.addEventListener('click', loadParkingLots);
+            el.btnNotifReservas.addEventListener('click', () => showOwnerNotificationSubView('reservas'));
+            el.btnNotifCancelamentos.addEventListener('click', () => showOwnerNotificationSubView('cancelamentos'));
+           
+            // (NOVO) Listener para revalidar planos quando o tempo muda
+            el.plansModalTimeInput.addEventListener('change', () => {
+                renderPlansInModal(
+                    currentModalData.abertura,
+                    currentModalData.fechamento
+                );
+            });
+        }
+
+        // --- Funções de Chamada de API ---
+        async function apiCall(method, params) {
+            let url = API_URL;
+            let options = { method: method, headers: {} };
+            if (method === 'GET') {
+                const searchParams = new URLSearchParams();
+                for (const key in params) {
+                    if (Array.isArray(params[key])) {
+                        params[key].forEach(value => searchParams.append(key + '[]', value));
+                    } else {
+                        searchParams.append(key, params[key]);
+                    }
+                }
+                url += '?' + searchParams.toString();
+            }
+            else if (method === 'POST') {
+                options.body = params;
+            }
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+                return await response.json();
+            } catch (error) {
+                console.error('Fetch error:', error);
+                showMessage(`Erro de conexão com o servidor: ${error.message}`, true);
+                return { status: 'error', message: 'Erro de conexão.' };
+            }
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const action = formData.get('action');
+            const result = await apiCall('POST', formData);
+            if (result.status === 'success') {
+                showMessage(result.message, false);
+                if (action.includes('register')) { form.reset(); }
+                if (action === 'login_user') {
+                    currentUser = result.data; showDashboard('user');
+                } else if (action === 'login_owner') {
+                    currentOwner = result.data; showDashboard('owner');
+                } else if (action === 'register_user') {
+                    el.showUserLogin.click();
+                } else if (action === 'register_owner') {
+                    el.showOwnerLogin.click();
+                } else if (action === 'register_parking') {
+                    form.reset();
+                    loadMyEstacionamentosForSelect();
+                }
+            } else { showMessage(result.message, true); }
+        }
+       
+        async function handleLogout() {
+            stopNotificationPolling();
+            await apiCall('GET', { action: 'logout' });
+            currentUser = null; currentOwner = null;
+            el.userDashboard.style.display = 'none';
+            el.ownerDashboard.style.display = 'none';
+            el.profileTabs.style.display = 'flex';
+            el.logoutFooter.style.display = 'none';
+            el.welcomeSection.style.display = 'block';
+            el.welcomeMessage.textContent = 'Sua vaga de estacionamento a um clique de distância.';
+            showView('user');
+            el.showUserLogin.click();
+            showMessage('Você saiu com sucesso.', false);
+        }
+       
+        // --- Funções Helper de Horário ---
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const [hours, minutes] = timeStr.split(':');
+            return parseInt(hours) * 60 + parseInt(minutes);
+        }
+       
+        // (ATUALIZADO) - Valida um horário específico, não mais "agora"
+        function isTimeOpen(inicio_previsto_str, aberturaStr, fechamentoStr) {
+            if (!aberturaStr || !fechamentoStr) {
+                return true; // Sempre aberto se não houver horário
+            }
+           
+            const inicio_dt = new Date(inicio_previsto_str);
+            const inicio_previsto_em_minutos = inicio_dt.getHours() * 60 + inicio_dt.getMinutes();
+            const aberturaInMinutes = timeToMinutes(aberturaStr);
+            const fechamentoInMinutes = timeToMinutes(fechamentoStr);
+
+            if (aberturaInMinutes > fechamentoInMinutes) { // Pernoite
+                return inicio_previsto_em_minutos >= aberturaInMinutes || inicio_previsto_em_minutos < fechamentoInMinutes;
+            } else { // Dia normal
+                return inicio_previsto_em_minutos >= aberturaInMinutes && inicio_previsto_em_minutos < fechamentoInMinutes;
+            }
+        }
+       
+        // (ATUALIZADO) - Valida um horário específico, não mais "agora"
+        function isPlanValid(periodo_horas, aberturaStr, fechamentoStr, inicio_previsto_str) {
+            if (!aberturaStr || !fechamentoStr) {
+                return { valid: true };
+            }
+           
+            const inicio_dt = new Date(inicio_previsto_str);
+            const inicio_previsto_em_minutos = inicio_dt.getHours() * 60 + inicio_dt.getMinutes();
+            const aberturaInMinutes = timeToMinutes(aberturaStr);
+            const fechamentoInMinutes = timeToMinutes(fechamentoStr);
+           
+            const planEndInMinutes = inicio_previsto_em_minutos + (periodo_horas * 60);
+
+            if (aberturaInMinutes < fechamentoInMinutes) { // Dia Normal
+                if (planEndInMinutes > fechamentoInMinutes) {
+                    return { valid: false, msg: `(Excede o fechamento - ${fechamentoStr.substring(0,5)})` };
+                }
+            } else { // Pernoite
+                const planEndInMinutesWrapped = planEndInMinutes % 1440;
+                if (planEndInMinutesWrapped > fechamentoInMinutes && planEndInMinutesWrapped < aberturaInMinutes) {
+                    return { valid: false, msg: `(Excede o fechamento - ${fechamentoStr.substring(0,5)})` };
+                }
+            }
+            return { valid: true };
+        }
+       
+        // --- Funções de Dashboard de Cliente ---
+        async function loadBairroFilter() {
+            const result = await apiCall('GET', { action: 'get_all_bairros' });
+            el.filterBairro.innerHTML = '<option value="">-- Todos os Bairros --</option>';
+            if (result.status === 'success' && result.data.length > 0) {
+                result.data.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.bairro;
+                    option.textContent = item.bairro;
+                    el.filterBairro.appendChild(option);
+                });
+            }
+        }
+       
+        async function loadParkingLots() {
+            const bairro = el.filterBairro.value;
+            const servicos_selecionados = [];
+            document.querySelectorAll('.service-filter-cb:checked').forEach(cb => {
+                servicos_selecionados.push(cb.value);
+            });
+            let params = { action: 'find_parking' };
+            if (bairro) {
+                params.bairro = bairro;
+            }
+            if (servicos_selecionados.length > 0) {
+                params.servicos = servicos_selecionados;
+            }
+            const result = await apiCall('GET', params);
+            el.parkingList.innerHTML = '';
+            if (result.status === 'success' && result.data.length > 0) {
+                result.data.forEach(parking => {
+                    const parkingEl = document.createElement('div');
+                    parkingEl.className = 'bg-white p-5 rounded-lg shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center';
+                    let horarioStr = "Horário não informado";
+                    if (parking.hora_abertura && parking.hora_fechamento) {
+                        horarioStr = `Abre: ${parking.hora_abertura.substring(0,5)} - Fecha: ${parking.hora_fechamento.substring(0,5)}`;
+                    }
+                    let servicosStr = "";
+                    if(parking.outros_servicos) {
+                        const servicosFormatados = parking.outros_servicos.split(',').join(' • ');
+                        servicosStr = `<p class="text-sm text-gray-700 mt-1"><b>Serviços:</b> ${servicosFormatados}</p>`;
+                    }
+                    parkingEl.innerHTML = `
+                        <div>
+                            <h3 class="text-xl font-bold text-blue-700">${parking.endereco}</h3>
+                            <p class="text-md font-semibold text-gray-700">${parking.bairro}</p>
+                            <p class="text-sm text-gray-600 mt-2">Vagas: <span class="font-bold text-green-600">${parking.vagas_disponiveis}</span></p>
+                            <p class="text-sm text-gray-500">${horarioStr}</p>
+                            ${servicosStr}
+                        </div>
+                        <button
+                            data-id="${parking.id}"
+                            data-endereco="${parking.endereco}"
+                            data-abertura="${parking.hora_abertura || ''}"
+                            data-fechamento="${parking.hora_fechamento || ''}"
+                            class="view-plans-btn mt-4 sm:mt-0 w-full sm:w-auto bg-blue-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-blue-700">
+                            Ver Planos
+                        </button>
+                    `;
+                    el.parkingList.appendChild(parkingEl);
+                });
+                el.parkingList.querySelectorAll('.view-plans-btn').forEach(btn => {
+                    btn.addEventListener('click', openPlansModal);
+                });
+            } else {
+                el.parkingList.innerHTML = '<p class="text-gray-500 text-center">Nenhum estacionamento disponível para este filtro.</p>';
+            }
+        }
+
+        // (FUNÇÃO ATUALIZADA) - Novo layout dos cards e botões
+        async function loadMyReservations() {
+            const result = await apiCall('GET', { action: 'get_my_reservations' });
+            el.myReservationsList.innerHTML = '';
+            if (result.status === 'success' && result.data.length > 0) {
+                result.data.forEach(reserva => {
+                    const reservaEl = document.createElement('div');
+                   
+                    let statusText = '';
+                    let statusColor = '';
+                    let buttonsHtml = '';
+                   
+                    const agora = new Date();
+                    const horaPrevista = new Date(reserva.hora_prevista_inicio);
+                    const diffMinutos = (horaPrevista.getTime() - agora.getTime()) / 60000;
+                   
+                    if (reserva.status === 'ativa') {
+                        statusText = "Aguardando Check-in";
+                        statusColor = "text-yellow-600";
+                       
+                        // Lógica do botão de Check-in (5 min antes até 60 min depois)
+                        const podeCheckin = diffMinutos <= 5 && diffMinutos > -60;
+                        let checkinBtn;
+                       
+                        if (podeCheckin) {
+                            checkinBtn = `<button data-reserva-id="${reserva.id}" class="checkin-btn w-full bg-green-500 text-white py-1 px-3 rounded-md text-sm font-semibold hover:bg-green-600">Ativar (Check-in)</button>`;
+                        } else {
+                            // (MUDANÇA) - Texto do botão é "Ativar (Check-in)" mas desabilitado
+                            checkinBtn = `<button class="w-full bg-gray-400 text-white py-1 px-3 rounded-md text-sm font-semibold" disabled title="Disponível 5 minutos antes do horário.">Ativar (Check-in)</button>`;
+                        }
+                       
+                        buttonsHtml = `
+                            ${checkinBtn}
+                            <button data-reserva-id="${reserva.id}" class="cancel-reservation-btn w-full bg-red-500 text-white py-1 px-3 rounded-md text-sm font-semibold hover:bg-red-600">Cancelar</button>
+                        `;
+                    } else if (reserva.status === 'em_uso') {
+                        statusText = "Em Uso";
+                        statusColor = "text-green-600";
+                        buttonsHtml = `<button data-reserva-id="${reserva.id}" class="checkout-btn w-full bg-blue-600 text-white py-1 px-3 rounded-md text-sm font-semibold hover:bg-blue-700">Encerrar (Check-out)</button>`;
+                    }
+                   
+                    const horaAgendadaStr = horaPrevista.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                    const horaCheckinStr = reserva.hora_inicio
+                        ? new Date(reserva.hora_inicio).toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                        : '---';
+
+                    reservaEl.className = 'p-4 rounded-lg bg-gray-100 flex flex-col sm:flex-row justify-between';
+                    reservaEl.innerHTML = `
+                        <div class="flex-1">
+                            <p class="font-bold text-gray-900">${reserva.endereco}</p>
+                            <p class="text-sm text-gray-700"><b>Plano:</b> ${reserva.plano_descricao || 'N/A'} (R$ ${parseFloat(reserva.valor_pago).toFixed(2)})</p>
+                            <p class="text-sm text-gray-700"><b>Agendado para:</b> ${horaAgendadaStr}</p>
+                            <p class="text-sm text-gray-700"><b>Check-in Real:</b> ${horaCheckinStr}</p>
+                            <p class="text-lg font-bold mt-1 ${statusColor}">${statusText}</p>
+                        </div>
+                        <div class="flex flex-col gap-2 w-full sm:w-36 mt-4 sm:mt-0 sm:ml-4">
+                            ${buttonsHtml}
+                        </div>
+                    `;
+                    el.myReservationsList.appendChild(reservaEl);
+                });
+               
+                el.myReservationsList.querySelectorAll('.cancel-reservation-btn').forEach(btn => btn.addEventListener('click', handleCancelReservation));
+                el.myReservationsList.querySelectorAll('.checkin-btn').forEach(btn => btn.addEventListener('click', handleCheckin));
+                el.myReservationsList.querySelectorAll('.checkout-btn').forEach(btn => btn.addEventListener('click', handleCheckout));
+               
+            } else {
+                el.myReservationsList.innerHTML = '<p class="text-gray-500 text-center">Você não possui reservas ativas no momento.</p>';
+            }
+        }
+       
+        async function handleCancelReservation(event) {
+            const reservaId = event.target.dataset.reservaId;
+            const justificativa = prompt("Por favor, digite o motivo do cancelamento (obrigatório):");
+            if (justificativa === null) { return; }
+            if (justificativa.trim() === "") {
+                showMessage("O motivo é obrigatório para cancelar.", true);
+                return;
+            }
+            const formData = new FormData();
+            formData.append('action', 'cancel_reservation');
+            formData.append('reserva_id', reservaId);
+            formData.append('justificativa', justificativa);
+            const result = await apiCall('POST', formData);
+            if (result.status === 'success') {
+                showMessage(result.message, false);
+                loadMyReservations();
+                loadParkingLots();
+            } else { showMessage(result.message, true); }
+        }
+       
+        async function handleCheckin(event) {
+            const reservaId = event.target.dataset.reservaId;
+            if (!confirm('Confirmar seu check-in agora?')) { return; }
+           
+            const formData = new FormData();
+            formData.append('action', 'checkin_reservation');
+            formData.append('reserva_id', reservaId);
+           
+            const result = await apiCall('POST', formData);
+            if (result.status === 'success') {
+                showMessage(result.message, false);
+                loadMyReservations();
+            } else { showMessage(result.message, true); }
+        }
+
+        async function handleCheckout(event) {
+            const reservaId = event.target.dataset.reservaId;
+            if (!confirm('Confirmar seu check-out (saída)? Sua vaga será liberada.')) { return; }
+
+            const formData = new FormData();
+            formData.append('action', 'checkout_reservation');
+            formData.append('reserva_id', reservaId);
+           
+            const result = await apiCall('POST', formData);
+            if (result.status === 'success') {
+                showMessage(result.message, false);
+                loadMyReservations();
+                loadParkingLots();
+            } else { showMessage(result.message, true); }
+        }
+
+        // (FUNÇÃO ATUALIZADA) - Define o input de data/hora
+        async function openPlansModal(event) {
+            const estacionamentoId = event.target.dataset.id;
+            const endereco = event.target.dataset.endereco;
+            const abertura = event.target.dataset.abertura;
+            const fechamento = event.target.dataset.fechamento;
+           
+            currentModalData.estacionamentoId = estacionamentoId;
+            currentModalData.abertura = abertura;
+            currentModalData.fechamento = fechamento;
+
+            el.plansModalTitle.textContent = `Planos para: ${endereco}`;
+            el.plansModalList.innerHTML = '<p>Carregando planos...</p>';
+            el.plansModal.classList.add('modal-visible');
+            el.plansModal.classList.remove('modal-hidden');
+           
+            // Define o valor padrão do input de hora
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset() + 5); // Adiciona 5 min
+            const isoNow = now.toISOString().slice(0, 16);
+            el.plansModalTimeInput.value = isoNow;
+            el.plansModalTimeInput.min = isoNow;
+
+            const result = await apiCall('GET', { action: 'get_plans_for_estacionamento', estacionamento_id: estacionamentoId });
+           
+            if (result.status === 'success') {
+                currentModalData.plans = result.data;
+                renderPlansInModal(abertura, fechamento); // Renderiza pela primeira vez
+            } else {
+                el.plansModalList.innerHTML = '<p class="text-gray-500 text-center">Nenhum plano de preço encontrado.</p>';
+            }
+        }
+       
+        // (NOVA FUNÇÃO) - Desenha os planos no modal (reutilizável)
+        function renderPlansInModal(abertura, fechamento) {
+            const hora_inicio_str = el.plansModalTimeInput.value;
+            if (!hora_inicio_str) {
+                el.plansModalStatus.textContent = "Por favor, selecione um horário de início.";
+                el.plansModalStatus.className = "text-center font-semibold text-red-600";
+                return;
+            }
+
+            const isOpen = isTimeOpen(hora_inicio_str, abertura, fechamento);
+            if (isOpen) {
+                el.plansModalStatus.textContent = "Horário de início válido";
+                el.plansModalStatus.className = "text-center font-semibold text-green-600";
+            } else {
+                el.plansModalStatus.textContent = "O estacionamento estará fechado neste horário.";
+                el.plansModalStatus.className = "text-center font-semibold text-red-600";
+            }
+
+            el.plansModalList.innerHTML = '';
+            if (currentModalData.plans.length > 0) {
+                currentModalData.plans.forEach(plan => {
+                    const planEl = document.createElement('div');
+                    planEl.className = 'plan-item p-3 bg-gray-100 rounded-md';
+                   
+                    const planCheck = isPlanValid(plan.periodo_horas, abertura, fechamento, hora_inicio_str);
+                    const isReservable = isOpen && planCheck.valid;
+
+                    let buttonHtml;
+                    if (isReservable) {
+                        buttonHtml = `<button data-plan-id="${plan.id}" class="reserve-plan-btn bg-green-600 text-white py-2 px-4 rounded-md text-sm font-semibold hover:bg-green-700">
+                                        Reservar (R$ ${parseFloat(plan.valor).toFixed(2)})
+                                      </button>`;
+                    } else {
+                        const errorMsg = !isOpen ? "(Horário fechado)" : planCheck.msg;
+                        buttonHtml = `<div class="text-right">
+                                        <button class="bg-gray-400 text-white py-2 px-4 rounded-md text-sm font-semibold" disabled>
+                                            Reservar (R$ ${parseFloat(plan.valor).toFixed(2)})
+                                        </button>
+                                        <p class="text-xs text-red-600">${errorMsg}</p>
+                                      </div>`;
+                    }
+                    planEl.innerHTML = `
+                        <span><span class="font-semibold">${plan.descricao}</span></span>
+                        ${buttonHtml}
+                    `;
+                    el.plansModalList.appendChild(planEl);
+                });
+                el.plansModalList.querySelectorAll('.reserve-plan-btn').forEach(btn => {
+                    btn.addEventListener('click', handleConfirmReservation);
+                });
+            } else {
+                el.plansModalList.innerHTML = '<p class="text-gray-500 text-center">Nenhum plano de preço encontrado para este local.</p>';
+            }
+        }
+
+
+        // (FUNÇÃO ATUALIZADA) - Envia 'hora_prevista_inicio'
+        async function handleConfirmReservation(event) {
+            const planId = event.target.dataset.planId;
+            const estacionamentoId = currentModalData.estacionamentoId;
+            const hora_prevista_inicio = el.plansModalTimeInput.value;
+           
+            if (!hora_prevista_inicio) {
+                showMessage('Por favor, selecione um horário de início.', true);
+                return;
+            }
+
+            if (!confirm(`Confirmar reserva para ${new Date(hora_prevista_inicio).toLocaleString('pt-BR')}?`)) { return; }
+           
+            const formData = new FormData();
+            formData.append('action', 'make_reservation');
+            formData.append('plano_id', planId);
+            formData.append('estacionamento_id', estacionamentoId);
+            formData.append('hora_prevista_inicio', hora_prevista_inicio);
+           
+            const result = await apiCall('POST', formData);
+            if (result.status === 'success') {
+                // <-- RESPOSTA À SUA PERGUNTA -->
+                showMessage(result.message, false); // 1. Mostra "Reserva realizada com sucesso!"
+                el.plansModal.classList.add('modal-hidden'); // 2. Fecha o modal
+               
+                loadParkingLots();
+                loadMyReservations();
+            } else {
+                showMessage(result.message, true); // Mostra o erro (ex: excede o horário)
+            }
+        }
+       
+        // --- Funções de Dashboard de Dono ---
+        function loadNotifications() {
+            apiCall('GET', { action: 'get_my_notifications' }).then(result => {
+                if (result.status !== 'success') return;
+                el.reservationNotificationList.innerHTML = '';
+                el.cancelNotificationList.innerHTML = '';
+                let hasReservations = false;
+                let hasCancellations = false;
+                if (result.data.length > 0) {
+                    result.data.forEach(notif => {
+                        const notifEl = document.createElement('div');
+                        notifEl.className = `p-3 rounded-md ${notif.lida ? 'bg-gray-100' : 'bg-blue-100'}`;
+                        notifEl.innerHTML = `
+                            <p class="font-medium text-gray-900">${notif.mensagem}</p>
+                            <p class="text-sm text-gray-600">${new Date(notif.data_criacao).toLocaleString('pt-BR')}</p>
+                        `;
+                        if (notif.mensagem.includes('Cancelada') || notif.mensagem.includes('CHECK-OUT')) {
+                            el.cancelNotificationList.appendChild(notifEl);
+                            hasCancellations = true;
+                        } else {
+                            el.reservationNotificationList.appendChild(notifEl);
+                            hasReservations = true;
+                        }
+                    });
+                }
+                if (!hasReservations) {
+                    el.reservationNotificationList.innerHTML = '<p class="text-gray-500 text-center">Nenhuma nova reserva ou check-in.</p>';
+                }
+                if (!hasCancellations) {
+                    el.cancelNotificationList.innerHTML = '<p class="text-gray-500 text-center">Nenhum cancelamento ou check-out.</p>';
+                }
+            });
+        }
+        function startNotificationPolling() {
+            stopNotificationPolling();
+            notificationInterval = setInterval(loadNotifications, 10000);
+        }
+        function stopNotificationPolling() {
+            if (notificationInterval) { clearInterval(notificationInterval); notificationInterval = null; }
+        }
+        async function loadMyEstacionamentosForSelect() {
+            const result = await apiCall('GET', { action: 'get_my_estacionamentos' });
+            el.selectMyEstacionamento.innerHTML = '<option value="">-- Selecione --</option>';
+            if (result.status === 'success' && result.data.length > 0) {
+                result.data.forEach(park => {
+                    const option = document.createElement('option');
+                    option.value = park.id; option.textContent = park.endereco;
+                    el.selectMyEstacionamento.appendChild(option);
+                });
+            } else if (result.status === 'success') { el.selectMyEstacionamento.innerHTML = '<option value="">Você não cadastrou estacionamentos</option>'; }
+        }
+        async function loadPlansForManagement(estacionamentoId) {
+            const result = await apiCall('GET', { action: 'get_plans_for_estacionamento', estacionamento_id: estacionamentoId });
+            el.plansListManager.innerHTML = '';
+            if (result.status === 'success' && result.data.length > 0) {
+                result.data.forEach(plan => {
+                    const planEl = document.createElement('div');
+                    planEl.className = 'plan-item p-2 bg-gray-100 rounded-md';
+                    planEl.innerHTML = `<span><span class="font-semibold">${plan.descricao}</span> - <span>R$ ${parseFloat(plan.valor).toFixed(2)}</span></span>
+                                        <button data-plan-id="${plan.id}" class="delete-plan-btn text-red-500 hover:text-red-700 font-bold">X</button>`;
+                    el.plansListManager.appendChild(planEl);
+                });
+                el.plansListManager.querySelectorAll('.delete-plan-btn').forEach(btn => btn.addEventListener('click', handleDeletePlan));
+            } else if (result.status === 'success') { el.plansListManager.innerHTML = '<p class="text-gray-500 text-center">Nenhum plano cadastrado.</p>'; }
+        }
+        async function handleAddPlan(event) {
+            event.preventDefault();
+            const estacionamentoId = el.selectMyEstacionamento.value;
+            if (!estacionamentoId) {
+                showMessage('Por favor, selecione um estacionamento primeiro.', true);
+                return;
+            }
+            const formData = new FormData(el.formAddPlan);
+            formData.append('action', 'add_plan');
+            formData.append('estacionamento_id', estacionamentoId);
+            const result = await apiCall('POST', formData);
+            if (result.status === 'success') {
+                showMessage(result.message, false);
+                el.formAddPlan.reset();
+                loadPlansForManagement(estacionamentoId);
+            } else {
+                showMessage(result.message, true);
+            }
+        }
+        async function handleDeletePlan(event) {
+            const planId = event.target.dataset.planId;
+            const estacionamentoId = el.selectMyEstacionamento.value;
+            if (!confirm('Tem certeza que quer remover este plano?')) { return; }
+            const formData = new FormData();
+            formData.append('action', 'delete_plan');
+            formData.append('plano_id', planId);
+            const result = await apiCall('POST', formData);
+            if (result.status === 'success') {
+                showMessage(result.message, false);
+                loadPlansForManagement(estacionamentoId);
+            } else {
+                showMessage(result.message, true);
+            }
+        }
+       
+        // --- Funções de Controle de UI ---
+        function showView(viewType) {
+            if (viewType === 'user') {
+                el.userView.style.display = 'block'; el.ownerView.style.display = 'none';
+                el.btnUserView.classList.add('bg-blue-600', 'text-white');
+                el.btnUserView.classList.remove('bg-blue-100', 'text-blue-700');
+                el.btnOwnerView.classList.add('bg-blue-100', 'text-blue-700');
+                el.btnOwnerView.classList.remove('bg-blue-600', 'text-white');
+            } else {
+                el.ownerView.style.display = 'block'; el.userView.style.display = 'none';
+                el.btnOwnerView.classList.add('bg-blue-600', 'text-white');
+                el.btnOwnerView.classList.remove('bg-blue-100', 'text-blue-700');
+                el.btnUserView.classList.add('bg-blue-100', 'text-blue-700');
+                el.btnUserView.classList.remove('bg-blue-600', 'text-white');
+            }
+        }
+        function showDashboard(role) {
+            el.userView.style.display = 'none';
+            el.ownerView.style.display = 'none';
+            el.profileTabs.style.display = 'none';
+            el.welcomeSection.style.display = 'none';
+            el.logoutFooter.style.display = 'flex';
+           
+            if (role === 'user') {
+                el.userDashboard.style.display = 'block';
+                el.ownerDashboard.style.display = 'none';
+                el.welcomeMessage.textContent = `Bem-vindo, ${currentUser.nome}!`;
+                stopNotificationPolling();
+                showUserDashboardView('parking');
+            } else if (role === 'owner') {
+                el.ownerDashboard.style.display = 'block';
+                el.userDashboard.style.display = 'none';
+                el.welcomeMessage.textContent = `Bem-vindo, Dono ${currentOwner.nome}!`;
+                showOwnerDashboardView('register');
+            }
+        }
+        function showUserDashboardView(view) {
+            if (view === 'reservations') {
+                el.divMyReservations.style.display = 'block';
+                el.divParkingList.style.display = 'none';
+                el.btnShowMyReservations.classList.add('bg-blue-600', 'text-white');
+                el.btnShowMyReservations.classList.remove('bg-blue-100', 'text-blue-700');
+                el.btnShowParkingList.classList.add('bg-blue-100', 'text-blue-700');
+                el.btnShowParkingList.classList.remove('bg-blue-600', 'text-white');
+                loadMyReservations();
+            } else {
+                el.divParkingList.style.display = 'block';
+                el.divMyReservations.style.display = 'none';
+                el.btnShowParkingList.classList.add('bg-blue-600', 'text-white');
+                el.btnShowParkingList.classList.remove('bg-blue-100', 'text-blue-700');
+                el.btnShowMyReservations.classList.add('bg-blue-100', 'text-blue-700');
+                el.btnShowMyReservations.classList.remove('bg-blue-600', 'text-white');
+                loadBairroFilter().then(() => {
+                    loadParkingLots();
+                });
+            }
+        }
+        function showOwnerDashboardView(view) {
+            el.divOwnerRegisterParking.style.display = 'none';
+            el.divOwnerManagePlans.style.display = 'none';
+            el.divOwnerNotifications.style.display = 'none';
+            el.btnOwnerRegisterParking.classList.remove('bg-blue-600', 'text-white');
+            el.btnOwnerManagePlans.classList.remove('bg-blue-600', 'text-white');
+            el.btnOwnerNotifications.classList.remove('bg-blue-600', 'text-white');
+            el.btnOwnerRegisterParking.classList.add('bg-blue-100', 'text-blue-700');
+            el.btnOwnerManagePlans.classList.add('bg-blue-100', 'text-blue-700');
+            el.btnOwnerNotifications.classList.add('bg-blue-100', 'text-blue-700');
+            stopNotificationPolling();
+            if (view === 'plans') {
+                el.divOwnerManagePlans.style.display = 'block';
+                el.btnOwnerManagePlans.classList.add('bg-blue-600', 'text-white');
+                el.btnOwnerManagePlans.classList.remove('bg-blue-100', 'text-blue-700');
+                loadMyEstacionamentosForSelect();
+                el.formAddPlan.style.display = 'none';
+                el.plansListManager.innerHTML = '<p class="text-gray-500 text-center">Selecione um estacionamento acima.</p>';
+            } else if (view === 'notifications') {
+                el.divOwnerNotifications.style.display = 'block';
+                el.btnOwnerNotifications.classList.add('bg-blue-600', 'text-white');
+                el.btnOwnerNotifications.classList.remove('bg-blue-100', 'text-blue-700');
+                showOwnerNotificationSubView('reservas');
+                loadNotifications();
+                startNotificationPolling();
+            } else { // 'register'
+                el.divOwnerRegisterParking.style.display = 'block';
+                el.btnOwnerRegisterParking.classList.add('bg-blue-600', 'text-white');
+                el.btnOwnerRegisterParking.classList.remove('bg-blue-100', 'text-blue-700');
+            }
+        }
+        function showOwnerNotificationSubView(view) {
+            if (view === 'cancelamentos') {
+                el.divNotifReservas.style.display = 'none';
+                el.divNotifCancelamentos.style.display = 'block';
+                el.btnNotifCancelamentos.classList.add('bg-blue-600', 'text-white');
+                el.btnNotifCancelamentos.classList.remove('bg-blue-100', 'text-blue-700');
+                el.btnNotifReservas.classList.add('bg-blue-100', 'text-blue-700');
+                el.btnNotifReservas.classList.remove('bg-blue-600', 'text-white');
+            } else { // 'reservas'
+                el.divNotifReservas.style.display = 'block';
+                el.divNotifCancelamentos.style.display = 'none';
+                el.btnNotifReservas.classList.add('bg-blue-600', 'text-white');
+                el.btnNotifReservas.classList.remove('bg-blue-100', 'text-blue-700');
+                el.btnNotifCancelamentos.classList.add('bg-blue-100', 'text-blue-700');
+                el.btnNotifCancelamentos.classList.remove('bg-blue-600', 'text-white');
+            }
+        }
+        function showMessage(message, isError = false) {
+            el.messageArea.textContent = message;
+            el.messageArea.className = 'message';
+            if (isError) { el.messageArea.classList.add('error'); }
+            else { el.messageArea.classList.add('success'); }
+            setTimeout(() => {
+                el.messageArea.textContent = '';
+                el.messageArea.className = 'message';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
